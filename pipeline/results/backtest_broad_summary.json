@@ -1,0 +1,28 @@
+{
+  "year": "broad",
+  "n_matches": 2584,
+  "train_context": 17129,
+  "leaderboard": {
+    "LimiX": {
+      "accuracy": 0.601,
+      "logloss": 0.8656
+    },
+    "XGBoost": {
+      "accuracy": 0.5956,
+      "logloss": 0.8664
+    },
+    "RandomForest": {
+      "accuracy": 0.5983,
+      "logloss": 0.8718
+    },
+    "LogisticReg": {
+      "accuracy": 0.5971,
+      "logloss": 0.8634
+    }
+  },
+  "scoreline": {
+    "mae": 0.936,
+    "exact_rate": 0.1157,
+    "outcome_acc": 0.5666
+  }
+}

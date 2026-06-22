@@ -1,0 +1,28 @@
+{
+  "year": 2022,
+  "n_matches": 64,
+  "train_context": 15968,
+  "leaderboard": {
+    "LimiX": {
+      "accuracy": 0.5,
+      "logloss": 1.0949
+    },
+    "XGBoost": {
+      "accuracy": 0.4531,
+      "logloss": 1.1362
+    },
+    "RandomForest": {
+      "accuracy": 0.5156,
+      "logloss": 1.0461
+    },
+    "LogisticReg": {
+      "accuracy": 0.5,
+      "logloss": 1.0683
+    }
+  },
+  "scoreline": {
+    "mae": 0.985,
+    "exact_rate": 0.1094,
+    "outcome_acc": 0.4844
+  }
+}

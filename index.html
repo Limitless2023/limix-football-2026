@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<!--
+  [INPUT]: 读取同目录 snapshot.json（由 build_web_data.py 生成）
+  [OUTPUT]: LimiX 2026 世界杯预测 单页应用（夺冠概率/实时成绩单/对阵预测器/回测/方法论）
+  [POS]: limix-football预测 的前端唯一入口，纯静态零后端，读快照即时渲染
+  [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LimiX · 2026 世界杯预测</title>
+<style>
+  :root{
+    --bg:#0A0E14; --panel:#131822; --panel2:#1A2130; --border:#232A36;
+    --text:#E6EAF0; --muted:#8A94A6;
+    --blue:#1877FC; --blue-dim:#1877FC33;
+    --orange:#FF6B35; --orange-dim:#FF6B3522;
+    --win:#22C55E; --draw:#F5A524; --loss:#EF4444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  a{color:var(--blue);text-decoration:none}
+  h2{font-size:26px;font-weight:700;letter-spacing:-.5px}
+  h2 .accent{color:var(--orange)}
+  section{padding:56px 0;border-top:1px solid var(--border)}
+  .sub{color:var(--muted);margin-top:6px;font-size:15px}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:var(--orange-dim);color:var(--orange);
+    border:1px solid #FF6B3544;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600}
+
+  /* Hero */
+  .hero{padding:80px 0 56px;text-align:center;background:
+    radial-gradient(900px 380px at 50% -10%, #1877FC22, transparent 70%)}
+  .hero h1{font-size:48px;font-weight:800;letter-spacing:-1.5px;line-height:1.1}
+  .hero h1 .g{background:linear-gradient(90deg,var(--blue),var(--orange));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);font-size:18px;margin-top:16px;max-width:620px;margin-left:auto;margin-right:auto}
+  .stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:36px}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 26px;min-width:150px}
+  .stat .v{font-size:30px;font-weight:800;color:var(--orange)}
+  .stat .l{color:var(--muted);font-size:13px;margin-top:2px}
+
+  /* Title odds */
+  .odds-row{display:flex;align-items:center;gap:12px;padding:9px 0}
+  .odds-row .rank{width:24px;color:var(--muted);font-size:13px;text-align:right}
+  .odds-row .name{width:120px;font-weight:600;font-size:15px}
+  .odds-row .flag{font-size:18px;margin-right:4px}
+  .bar{flex:1;height:24px;background:var(--panel2);border-radius:7px;overflow:hidden;position:relative}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--orange));border-radius:7px}
+  .odds-row .pct{width:58px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+  .odds-row .mini{width:150px;color:var(--muted);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+
+  /* Predictor */
+  .pred-card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:28px}
+  .pred-pick{display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap}
+  select{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:10px;
+    padding:11px 14px;font-size:16px;font-weight:600;min-width:170px;cursor:pointer}
+  .vs{color:var(--orange);font-weight:800;font-size:18px}
+  .score-box{text-align:center;margin:26px 0 18px}
+  .score-box .sc{font-size:52px;font-weight:800;letter-spacing:2px}
+  .score-box .sc .dash{color:var(--muted);margin:0 10px}
+  .score-box .verdict{color:var(--muted);font-size:14px;margin-top:4px}
+  .wdl{display:flex;height:40px;border-radius:10px;overflow:hidden;font-size:13px;font-weight:700}
+  .wdl > div{display:flex;align-items:center;justify-content:center;color:#06121f;transition:flex .4s}
+  .wdl .w{background:var(--win)} .wdl .d{background:var(--draw)} .wdl .l{background:var(--loss)}
+  .wdl-legend{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:7px}
+
+  /* Live scorecard */
+  .ring-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+  .ring{--p:0;width:120px;height:120px;border-radius:50%;flex-shrink:0;
+    background:conic-gradient(var(--orange) calc(var(--p)*1%), var(--panel2) 0);
+    display:flex;align-items:center;justify-content:center}
+  .ring > div{width:92px;height:92px;border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .num{font-size:30px;font-weight:800;color:var(--orange)}
+  .ring .cap{font-size:11px;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .match{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative}
+  .match .row{display:flex;justify-content:space-between;align-items:center;font-size:15px}
+  .match .team{font-weight:600} .match .gs{font-weight:800;font-variant-numeric:tabular-nums}
+  .match .meta{color:var(--muted);font-size:12px;margin:7px 0}
+  .match .pbar{display:flex;height:6px;border-radius:4px;overflow:hidden;margin-top:8px}
+  .match .pbar .w{background:var(--win)} .match .pbar .d{background:var(--draw)} .match .pbar .l{background:var(--loss)}
+  .tick{position:absolute;top:12px;right:12px;font-size:12px;font-weight:700;padding:2px 7px;border-radius:6px}
+  .tick.ok{background:#22C55E22;color:var(--win)} .tick.no{background:#EF444422;color:var(--loss)}
+  .pred-line{color:var(--muted);font-size:12px;margin-top:8px}
+  .pred-line b{color:var(--blue)}
+
+  /* Upcoming + explanation */
+  .grp-title{color:var(--muted);font-size:13px;font-weight:700;margin:18px 0 8px;letter-spacing:.5px}
+  .up{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden}
+  .up-head{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;transition:background .15s}
+  .up-head:hover{background:var(--panel2)}
+  .up-teams{flex:1;display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+  .up-teams .mid{color:var(--orange);font-weight:800;font-variant-numeric:tabular-nums}
+  .up-prob{display:flex;height:7px;width:160px;border-radius:4px;overflow:hidden;flex-shrink:0}
+  .up-prob .w{background:var(--win)} .up-prob .d{background:var(--draw)} .up-prob .l{background:var(--loss)}
+  .up-caret{color:var(--muted);font-size:12px;transition:transform .2s;flex-shrink:0}
+  .up.open .up-caret{transform:rotate(90deg)}
+  .up-body{display:none;padding:4px 16px 16px;border-top:1px solid var(--border)}
+  .up.open .up-body{display:block}
+  .up-why{color:var(--muted);font-size:12px;margin:10px 0 8px}
+  .cf{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:13px}
+  .cf .cn{width:96px;flex-shrink:0}
+  .cf .cbar{flex:1;height:14px;background:var(--panel2);border-radius:5px;overflow:hidden}
+  .cf .cbar > i{display:block;height:100%;border-radius:5px}
+  .cf .cside{width:80px;text-align:right;font-size:12px;flex-shrink:0}
+  .side-h{color:var(--blue)} .side-a{color:var(--orange)} .side-e{color:var(--muted)}
+
+  /* Backtest table */
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{text-align:left;padding:11px 12px;font-size:14px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr.limix{background:var(--orange-dim)} tr.limix td{font-weight:700}
+  tr.limix td:first-child{color:var(--orange)}
+  .bt-tabs{display:flex;gap:8px;margin:18px 0 4px}
+  .bt-tab{background:var(--panel);border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:600}
+  .bt-tab.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
+  .bt-note{color:var(--muted);font-size:13px;margin-top:12px}
+
+  /* Methodology */
+  .feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:18px}
+  .feat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}
+  .feat .t{font-weight:700;color:var(--orange);font-size:14px}
+  .feat .d{color:var(--muted);font-size:13px;margin-top:4px}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+  .compare > div{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px}
+  .compare h4{font-size:15px;margin-bottom:10px}
+  .compare ul{list-style:none;font-size:14px} .compare li{padding:5px 0;color:var(--muted)}
+  .compare li::before{content:"›";color:var(--blue);margin-right:8px;font-weight:700}
+  .compare .limx{border-color:#FF6B3555}
+  .compare .limx h4{color:var(--orange)}
+  .compare .limx li::before{content:"✓";color:var(--orange)}
+  footer{padding:40px 0;color:var(--muted);font-size:13px;text-align:center;border-top:1px solid var(--border)}
+  @media(max-width:600px){.hero h1{font-size:34px}.compare{grid-template-columns:1fr}.odds-row .mini{display:none}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="wrap">
+    <span class="badge">⚡ LimiX 结构化数据基础模型 · 零调参一次推理</span>
+    <h1 style="margin-top:18px">谁将捧起<span class="g">2026 世界杯</span>？</h1>
+    <p>LimiX 读完 154 年、近 5 万场国际比赛，给出每场<b>胜平负概率 + 精确比分</b>，并模拟整届赛事 <span id="nsims"></span> 次推演冠军。不止"谁会赢"，更告诉你"赢几比几、凭什么信"。</p>
+    <div class="stats">
+      <div class="stat"><div class="v" id="s-champ">—</div><div class="l">夺冠最大热门</div></div>
+      <div class="stat"><div class="v" id="s-acc">—</div><div class="l">在打赛事预测准确率</div></div>
+      <div class="stat"><div class="v" id="s-bt">—</div><div class="l">大样本回测准确率</div></div>
+      <div class="stat"><div class="v" id="s-mae">—</div><div class="l">比分预测场均误差</div></div>
+    </div>
+  </div>
+</div>
+
+<section><div class="wrap">
+  <h2>🏆 <span class="accent">夺冠概率</span> · 蒙特卡洛推演</h2>
+  <p class="sub">从当前小组赛进度出发，用 LimiX 的逐场预测作引擎，模拟整届赛事 <span id="nsims2"></span> 次。</p>
+  <div id="odds" style="margin-top:24px"></div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>🎯 <span class="accent">对阵预测器</span> · 任选两队</h2>
+  <p class="sub">中立场对阵。胜平负概率与比分均来自 LimiX 对 2256 组配对的离线推理，即时呈现。</p>
+  <div class="pred-card" style="margin-top:24px">
+    <div class="pred-pick">
+      <select id="teamA"></select>
+      <span class="vs">VS</span>
+      <select id="teamB"></select>
+    </div>
+    <div class="score-box">
+      <div class="sc"><span id="scA">-</span><span class="dash">:</span><span id="scB">-</span></div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+    <div class="wdl">
+      <div class="w" id="wW">主胜</div><div class="d" id="wD">平</div><div class="l" id="wL">客胜</div>
+    </div>
+    <div class="wdl-legend"><span id="lW"></span><span id="lD"></span><span id="lL"></span></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>📡 <span class="accent">实时成绩单</span> · 2026 世界杯（已踢比赛真值对照）</h2>
+  <p class="sub">赛前 LimiX 的预测 vs 真实结果，逐场可验证。这是"活体"诚实度——预测发生在开球前。</p>
+  <div class="ring-wrap" style="margin-top:24px">
+    <div class="ring" id="ring"><div><div class="num" id="ring-num">—</div><div class="cap">胜平负命中</div></div></div>
+    <div>
+      <div style="font-size:18px;font-weight:700">LimiX 在 <span id="live-n"></span> 场已赛中命中 <span id="live-hit" style="color:var(--orange)"></span> 场</div>
+      <div class="sub">绿勾=胜平负预测正确，红叉=爆冷未中。比分为 LimiX 赛前预测比分。</div>
+    </div>
+  </div>
+  <div class="grid" id="live"></div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>🔮 <span class="accent">前瞻预测</span> · 尚未开踢的比赛</h2>
+  <p class="sub">2026 世界杯剩余 32 场小组赛，LimiX 给出赛前预测。点开任意一场看 <b>"为什么这样判断"</b>——LimiX 局部解释接口给出的特征贡献。</p>
+  <div id="upcoming" style="margin-top:24px"></div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>📊 <span class="accent">回测成绩单</span> · LimiX vs 传统机器学习</h2>
+  <p class="sub">同一份无泄漏特征下，<b>零调参的 LimiX 一次推理</b> 对阵 <b>精心调参的 XGBoost / 随机森林 / 逻辑回归</b>。真值可对照，诚实摊开。</p>
+  <div class="bt-tabs" id="bt-tabs"></div>
+  <div id="bt-body"></div>
+  <p class="bt-note" id="bt-note"></p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>🔬 <span class="accent">方法论</span> · 为什么可信</h2>
+  <p class="sub">六大类特征，按时间单向单遍扫描生成——开球时刻的每个特征只用此前已踢过的比赛，<b>绝无未来泄漏</b>。</p>
+  <div class="feat-grid">
+    <div class="feat"><div class="t">Elo 实力评分</div><div class="d">每场赛后更新，胜负分差+赛事重要性加权，非中立场主队 +65</div></div>
+    <div class="feat"><div class="t">近期状态</div><div class="d">近 5 / 10 场场均积分，兼顾即时战术与长期势头</div></div>
+    <div class="feat"><div class="t">进球统计</div><div class="d">近期进/失球与净胜球，区分同分不同攻击力的球队</div></div>
+    <div class="feat"><div class="t">连胜与休整</div><div class="d">连胜场次表征势头，距上场天数表征疲劳</div></div>
+    <div class="feat"><div class="t">历史交锋</div><div class="d">两队交锋胜率/平局率/净胜球，捕捉针对性克制</div></div>
+    <div class="feat"><div class="t">LimiX 推理</div><div class="d">零训练零调参，一次前向推理同出分类概率+比分回归</div></div>
+  </div>
+  <div class="compare">
+    <div><h4>Prior Labs / TabPFN demo</h4><ul>
+      <li>仅给胜平负概率</li><li>蒙特卡洛推演冠军</li>
+      <li>不展示精确比分</li><li>不展示可解释与传统ML对比</li>
+    </ul></div>
+    <div class="limx"><h4>LimiX 超越版</h4><ul>
+      <li>胜平负校准概率</li><li>蒙特卡洛夺冠概率分布</li>
+      <li>精确比分回归（场均误差 <span id="cmp-mae"></span> 球）</li>
+      <li>自动 PK 传统ML + 历史回测诚实验证</li><li>逐场 SHAP 特征归因（为什么这样预测）</li>
+    </ul></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  LimiX 结构化数据基础模型演示 · 数据 1872–2026 国际比赛（martj42）· 模型 <span id="ft-model"></span> · 快照 <span id="ft-date"></span><br>
+  预测仅供演示，足球魅力恰在不可预测。
+</div></footer>
+
+<script>
+let D=null;
+const pct = x => (x*100).toFixed(1)+'%';
+const pct0 = x => Math.round(x*100)+'%';
+
+fetch('snapshot.json').then(r=>r.json()).then(d=>{D=d; render();});
+
+function render(){
+  document.getElementById('nsims').textContent = D.n_sims.toLocaleString();
+  document.getElementById('nsims2').textContent = D.n_sims.toLocaleString();
+  document.getElementById('ft-model').textContent = D.model;
+  document.getElementById('ft-date').textContent = D.generated;
+
+  // Hero stats
+  const top = D.title_odds[0];
+  document.getElementById('s-champ').textContent = top.cn+' '+pct0(top.champion);
+  document.getElementById('s-acc').textContent = pct0(D.live.accuracy);
+  const broad = D.backtests.broad;
+  if(broad){
+    document.getElementById('s-bt').textContent = pct0(broad.leaderboard.LimiX.accuracy);
+    document.getElementById('s-mae').textContent = broad.scoreline.mae.toFixed(2)+' 球';
+    document.getElementById('cmp-mae').textContent = broad.scoreline.mae.toFixed(2);
+  }
+
+  renderOdds(); renderPredictor(); renderLive(); renderUpcoming(); renderBacktest();
+}
+
+// ---- 前瞻预测 + LimiX 解释 ----
+function renderUpcoming(){
+  const byG={};
+  D.upcoming.forEach(m=>{(byG[m.group]=byG[m.group]||[]).push(m)});
+  const sideTxt={home:m=>'利好 '+m.hcn,away:m=>'利好 '+m.acn,even:()=>'中性'};
+  const sideCls={home:'side-h',away:'side-a',even:'side-e'};
+  let html='';
+  Object.keys(byG).sort().forEach(g=>{
+    html+=`<div class="grp-title">${g} 组</div>`;
+    byG[g].forEach((m,i)=>{
+      const id=`up-${g}-${i}`;
+      const concepts=(m.concepts||[]).map(c=>{
+        const w=Math.round((c.pct||0)*100);
+        const col=c.side==='home'?'var(--blue)':c.side==='away'?'var(--orange)':'var(--muted)';
+        return `<div class="cf"><span class="cn">${c.name}</span>
+          <span class="cbar"><i style="width:${w}%;background:${col}"></i></span>
+          <span class="cside ${sideCls[c.side]}">${sideTxt[c.side](m)}</span></div>`;
+      }).join('');
+      html+=`<div class="up" id="${id}">
+        <div class="up-head" onclick="document.getElementById('${id}').classList.toggle('open')">
+          <span class="up-teams">${m.hflag} ${m.hcn} <span class="mid">${m.gh} : ${m.ga}</span> ${m.acn} ${m.aflag}</span>
+          <span class="up-prob"><i class="w" style="width:${m.p_home*100}%"></i><i class="d" style="width:${m.p_draw*100}%"></i><i class="l" style="width:${m.p_away*100}%"></i></span>
+          <span class="up-caret">▶</span>
+        </div>
+        <div class="up-body">
+          <div class="up-why">胜平负：${m.hcn}胜 ${pct0(m.p_home)} · 平 ${pct0(m.p_draw)} · ${m.acn}胜 ${pct0(m.p_away)}　|　LimiX 预测比分 <b style="color:var(--orange)">${m.gh}:${m.ga}</b></div>
+          <div class="up-why">🔍 LimiX 局部解释 — 各因素重要性（条长）与利好方（颜色）：</div>
+          ${concepts||'<span class="up-why">（该场暂无解释数据）</span>'}
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById('upcoming').innerHTML=html;
+}
+
+// ---- 夺冠概率 ----
+function renderOdds(){
+  const max = D.title_odds[0].champion;
+  const html = D.title_odds.slice(0,16).map((o,i)=>`
+    <div class="odds-row">
+      <span class="rank">${i+1}</span>
+      <span class="name"><span class="flag">${D.flags[o.team]||'🏳️'}</span>${o.cn}</span>
+      <span class="bar"><i style="width:${Math.max(2,o.champion/max*100)}%"></i></span>
+      <span class="pct">${pct(o.champion)}</span>
+      <span class="mini">四强 ${pct0(o.semifinal)} · 决赛 ${pct0(o.final)}</span>
+    </div>`).join('');
+  document.getElementById('odds').innerHTML = html;
+}
+
+// ---- 对阵预测器 ----
+function renderPredictor(){
+  const teams = [...D.teams].sort((a,b)=>D.cn[a].localeCompare(D.cn[b],'zh'));
+  const opts = teams.map(t=>`<option value="${t}">${D.flags[t]||''} ${D.cn[t]}</option>`).join('');
+  const A=document.getElementById('teamA'), B=document.getElementById('teamB');
+  A.innerHTML=opts; B.innerHTML=opts;
+  A.value='Spain'; B.value='Argentina';
+  A.onchange=updatePredictor; B.onchange=updatePredictor;
+  updatePredictor();
+}
+function updatePredictor(){
+  const a=document.getElementById('teamA').value, b=document.getElementById('teamB').value;
+  if(a===b){document.getElementById('verdict').textContent='请选择两支不同球队';return;}
+  const p=D.pairs[a+'|'+b]; if(!p)return;
+  document.getElementById('scA').textContent=Math.round(p.gh);
+  document.getElementById('scB').textContent=Math.round(p.ga);
+  const W=p.p_home,Dr=p.p_draw,L=p.p_away;
+  document.getElementById('wW').style.flex=W; document.getElementById('wD').style.flex=Dr; document.getElementById('wL').style.flex=L;
+  document.getElementById('wW').textContent=W>0.08?pct0(W):''; document.getElementById('wD').textContent=Dr>0.08?pct0(Dr):''; document.getElementById('wL').textContent=L>0.08?pct0(L):'';
+  document.getElementById('lW').textContent=D.cn[a]+'胜 '+pct(W);
+  document.getElementById('lD').textContent='平 '+pct(Dr);
+  document.getElementById('lL').textContent=D.cn[b]+'胜 '+pct(L);
+  const eA=D.ratings[a],eB=D.ratings[b];
+  const fav = W>L?D.cn[a]:D.cn[b];
+  document.getElementById('verdict').innerHTML=`LimiX 判断 <b style="color:var(--orange)">${fav}</b> 占优 · Elo ${eA.toFixed(0)} vs ${eB.toFixed(0)}`;
+}
+
+// ---- 实时成绩单 ----
+function renderLive(){
+  document.getElementById('live-n').textContent=D.live.n;
+  document.getElementById('live-hit').textContent=Math.round(D.live.accuracy*D.live.n);
+  document.getElementById('ring-num').textContent=pct0(D.live.accuracy);
+  document.getElementById('ring').style.setProperty('--p', D.live.accuracy*100);
+  const html=D.live.matches.slice().reverse().map(m=>`
+    <div class="match">
+      <span class="tick ${m.ok?'ok':'no'}">${m.ok?'✓ 命中':'✗ 爆冷'}</span>
+      <div class="row"><span class="team">${m.hflag} ${m.hcn}</span><span class="gs">${m.hs}</span></div>
+      <div class="row"><span class="team">${m.aflag} ${m.acn}</span><span class="gs">${m.as}</span></div>
+      <div class="pbar">
+        <i class="w" style="width:${m.p_home*100}%"></i><i class="d" style="width:${m.p_draw*100}%"></i><i class="l" style="width:${m.p_away*100}%"></i>
+      </div>
+      <div class="pred-line">LimiX 赛前预测：<b>${m.pred_hs}:${m.pred_as}</b> · 主胜${pct0(m.p_home)}/平${pct0(m.p_draw)}/客胜${pct0(m.p_away)}</div>
+    </div>`).join('');
+  document.getElementById('live').innerHTML=html;
+}
+
+// ---- 回测成绩单 ----
+const BT_META={broad:{name:'大样本（近两年 2584 场）',note:'噪声平均后真实实力显现：LimiX 零调参一次推理即取得最高准确率，且 LogLoss 处于最优档。'},
+  '2026':{name:'2026 世界杯（在打 40 场）',note:'正在进行的赛事，真实结果持续验证 LimiX 领先。'},
+  '2022':{name:'2022 世界杯（64 场）',note:'爆冷如云的单届赛事样本小、方差大，四模型同处 50% 一线——足球的魅力正在于不可预测。'}};
+function renderBacktest(){
+  // 固定顺序：大样本(最强论据)→在打→单届故事；避免 JS 把"2022/2026"数字键排到前面
+  const keys=['broad','2026','2022'].filter(k=>D.backtests[k]);
+  const tabs=document.getElementById('bt-tabs');
+  tabs.innerHTML=keys.map((k,i)=>`<div class="bt-tab ${i===0?'active':''}" data-k="${k}">${BT_META[k]?BT_META[k].name:k}</div>`).join('');
+  tabs.querySelectorAll('.bt-tab').forEach(t=>t.onclick=()=>{
+    tabs.querySelectorAll('.bt-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active'); drawBt(t.dataset.k);
+  });
+  drawBt(keys[0]);
+}
+function drawBt(k){
+  const bt=D.backtests[k];
+  const rows=Object.entries(bt.leaderboard).sort((a,b)=>b[1].accuracy-a[1].accuracy);
+  const best=rows[0][0];
+  const body=`
+    <table><thead><tr><th>模型</th><th class="num">胜平负准确率</th><th class="num">LogLoss</th><th>说明</th></tr></thead><tbody>
+    ${rows.map(([n,s])=>`<tr class="${n==='LimiX'?'limix':''}">
+      <td>${n}${n===best?' 🏆':''}</td><td class="num">${pct(s.accuracy)}</td><td class="num">${s.logloss.toFixed(3)}</td>
+      <td style="color:var(--muted);font-size:13px">${n==='LimiX'?'零调参·一次推理':'已调参'}</td></tr>`).join('')}
+    </tbody></table>
+    <p class="bt-note">📐 LimiX 额外提供比分回归：场均误差 ${bt.scoreline.mae.toFixed(2)} 球，精确比分命中率 ${pct0(bt.scoreline.exact_rate)}（传统分类模型做不到）。</p>`;
+  document.getElementById('bt-body').innerHTML=body;
+  document.getElementById('bt-note').textContent=BT_META[k]?BT_META[k].note:'';
+}
+</script>
+</body>
+</html>

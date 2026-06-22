@@ -1,0 +1,437 @@
+{
+  "n_sims": 20000,
+  "odds": [
+    {
+      "team": "Spain",
+      "cn": "西班牙",
+      "elo": 2208.3,
+      "advance": 1.0,
+      "semifinal": 0.5555,
+      "final": 0.3603,
+      "champion": 0.218
+    },
+    {
+      "team": "Argentina",
+      "cn": "阿根廷",
+      "elo": 2195.4,
+      "advance": 0.9991,
+      "semifinal": 0.5129,
+      "final": 0.3085,
+      "champion": 0.1933
+    },
+    {
+      "team": "France",
+      "cn": "法国",
+      "elo": 2153.5,
+      "advance": 0.9963,
+      "semifinal": 0.3996,
+      "final": 0.2454,
+      "champion": 0.1374
+    },
+    {
+      "team": "England",
+      "cn": "英格兰",
+      "elo": 2141.1,
+      "advance": 0.9989,
+      "semifinal": 0.4031,
+      "final": 0.2303,
+      "champion": 0.1183
+    },
+    {
+      "team": "Brazil",
+      "cn": "巴西",
+      "elo": 2067.0,
+      "advance": 1.0,
+      "semifinal": 0.2655,
+      "final": 0.1429,
+      "champion": 0.0717
+    },
+    {
+      "team": "Colombia",
+      "cn": "哥伦比亚",
+      "elo": 2077.2,
+      "advance": 0.987,
+      "semifinal": 0.251,
+      "final": 0.1252,
+      "champion": 0.0481
+    },
+    {
+      "team": "Morocco",
+      "cn": "摩洛哥",
+      "elo": 2033.1,
+      "advance": 1.0,
+      "semifinal": 0.1713,
+      "final": 0.0671,
+      "champion": 0.03
+    },
+    {
+      "team": "Netherlands",
+      "cn": "荷兰",
+      "elo": 2045.6,
+      "advance": 1.0,
+      "semifinal": 0.1618,
+      "final": 0.0682,
+      "champion": 0.0294
+    },
+    {
+      "team": "Germany",
+      "cn": "德国",
+      "elo": 2046.6,
+      "advance": 1.0,
+      "semifinal": 0.157,
+      "final": 0.06,
+      "champion": 0.026
+    },
+    {
+      "team": "Norway",
+      "cn": "挪威",
+      "elo": 2033.9,
+      "advance": 0.9934,
+      "semifinal": 0.1509,
+      "final": 0.06,
+      "champion": 0.0233
+    },
+    {
+      "team": "Portugal",
+      "cn": "葡萄牙",
+      "elo": 2029.1,
+      "advance": 0.7642,
+      "semifinal": 0.1225,
+      "final": 0.0574,
+      "champion": 0.0233
+    },
+    {
+      "team": "Japan",
+      "cn": "日本",
+      "elo": 2025.2,
+      "advance": 1.0,
+      "semifinal": 0.1462,
+      "final": 0.0592,
+      "champion": 0.0207
+    },
+    {
+      "team": "Mexico",
+      "cn": "墨西哥",
+      "elo": 2001.7,
+      "advance": 1.0,
+      "semifinal": 0.0962,
+      "final": 0.0348,
+      "champion": 0.0097
+    },
+    {
+      "team": "Switzerland",
+      "cn": "瑞士",
+      "elo": 1958.1,
+      "advance": 1.0,
+      "semifinal": 0.0651,
+      "final": 0.0237,
+      "champion": 0.0082
+    },
+    {
+      "team": "Canada",
+      "cn": "加拿大",
+      "elo": 1907.1,
+      "advance": 1.0,
+      "semifinal": 0.0559,
+      "final": 0.0179,
+      "champion": 0.0047
+    },
+    {
+      "team": "Belgium",
+      "cn": "比利时",
+      "elo": 1937.7,
+      "advance": 0.8501,
+      "semifinal": 0.0454,
+      "final": 0.0149,
+      "champion": 0.0046
+    },
+    {
+      "team": "United States",
+      "cn": "美国",
+      "elo": 1956.3,
+      "advance": 1.0,
+      "semifinal": 0.0469,
+      "final": 0.014,
+      "champion": 0.0044
+    },
+    {
+      "team": "Australia",
+      "cn": "澳大利亚",
+      "elo": 1925.9,
+      "advance": 0.9154,
+      "semifinal": 0.0439,
+      "final": 0.0139,
+      "champion": 0.0039
+    },
+    {
+      "team": "Ecuador",
+      "cn": "厄瓜多尔",
+      "elo": 1968.8,
+      "advance": 0.3669,
+      "semifinal": 0.0308,
+      "final": 0.0108,
+      "champion": 0.0035
+    },
+    {
+      "team": "South Korea",
+      "cn": "韩国",
+      "elo": 1899.1,
+      "advance": 0.9441,
+      "semifinal": 0.044,
+      "final": 0.0125,
+      "champion": 0.0034
+    },
+    {
+      "team": "Austria",
+      "cn": "奥地利",
+      "elo": 1921.4,
+      "advance": 0.9657,
+      "semifinal": 0.0364,
+      "final": 0.0102,
+      "champion": 0.0027
+    },
+    {
+      "team": "Paraguay",
+      "cn": "巴拉圭",
+      "elo": 1919.6,
+      "advance": 0.7181,
+      "semifinal": 0.0319,
+      "final": 0.0085,
+      "champion": 0.0025
+    },
+    {
+      "team": "Croatia",
+      "cn": "克罗地亚",
+      "elo": 1951.2,
+      "advance": 0.7827,
+      "semifinal": 0.0303,
+      "final": 0.0101,
+      "champion": 0.0025
+    },
+    {
+      "team": "Uruguay",
+      "cn": "乌拉圭",
+      "elo": 1932.8,
+      "advance": 0.4287,
+      "semifinal": 0.0183,
+      "final": 0.006,
+      "champion": 0.0022
+    },
+    {
+      "team": "Iran",
+      "cn": "伊朗",
+      "elo": 1892.9,
+      "advance": 0.7385,
+      "semifinal": 0.029,
+      "final": 0.0085,
+      "champion": 0.0019
+    },
+    {
+      "team": "Scotland",
+      "cn": "苏格兰",
+      "elo": 1878.3,
+      "advance": 0.8791,
+      "semifinal": 0.0277,
+      "final": 0.0075,
+      "champion": 0.0016
+    },
+    {
+      "team": "Egypt",
+      "cn": "埃及",
+      "elo": 1860.2,
+      "advance": 0.9999,
+      "semifinal": 0.0203,
+      "final": 0.0041,
+      "champion": 0.0011
+    },
+    {
+      "team": "Senegal",
+      "cn": "塞内加尔",
+      "elo": 1891.8,
+      "advance": 0.5499,
+      "semifinal": 0.0172,
+      "final": 0.0046,
+      "champion": 0.0011
+    },
+    {
+      "team": "Ivory Coast",
+      "cn": "科特迪瓦",
+      "elo": 1848.1,
+      "advance": 0.9352,
+      "semifinal": 0.0165,
+      "final": 0.0032,
+      "champion": 0.0009
+    },
+    {
+      "team": "Turkey",
+      "cn": "土耳其",
+      "elo": 1906.4,
+      "advance": 0.1699,
+      "semifinal": 0.0089,
+      "final": 0.0026,
+      "champion": 0.0006
+    },
+    {
+      "team": "Algeria",
+      "cn": "阿尔及利亚",
+      "elo": 1874.7,
+      "advance": 0.5357,
+      "semifinal": 0.014,
+      "final": 0.004,
+      "champion": 0.0004
+    },
+    {
+      "team": "Sweden",
+      "cn": "瑞典",
+      "elo": 1798.5,
+      "advance": 0.9151,
+      "semifinal": 0.0075,
+      "final": 0.0013,
+      "champion": 0.0003
+    },
+    {
+      "team": "South Africa",
+      "cn": "南非",
+      "elo": 1669.3,
+      "advance": 0.1641,
+      "semifinal": 0.0001,
+      "final": 0.0001,
+      "champion": 0.0001
+    },
+    {
+      "team": "Czech Republic",
+      "cn": "捷克",
+      "elo": 1779.9,
+      "advance": 0.2451,
+      "semifinal": 0.0018,
+      "final": 0.0003,
+      "champion": 0.0001
+    },
+    {
+      "team": "Bosnia and Herzegovina",
+      "cn": "波黑",
+      "elo": 1668.2,
+      "advance": 0.4093,
+      "semifinal": 0.0006,
+      "final": 0.0001,
+      "champion": 0.0001
+    },
+    {
+      "team": "Cape Verde",
+      "cn": "佛得角",
+      "elo": 1695.4,
+      "advance": 0.5967,
+      "semifinal": 0.0011,
+      "final": 0.0001,
+      "champion": 0.0001
+    },
+    {
+      "team": "DR Congo",
+      "cn": "刚果(金)",
+      "elo": 1795.2,
+      "advance": 0.4894,
+      "semifinal": 0.0046,
+      "final": 0.0004,
+      "champion": 0.0001
+    },
+    {
+      "team": "Uzbekistan",
+      "cn": "乌兹别克斯坦",
+      "elo": 1817.6,
+      "advance": 0.4167,
+      "semifinal": 0.0049,
+      "final": 0.0008,
+      "champion": 0.0001
+    },
+    {
+      "team": "Qatar",
+      "cn": "卡塔尔",
+      "elo": 1592.9,
+      "advance": 0.3089,
+      "semifinal": 0.0001,
+      "final": 0.0,
+      "champion": 0.0
+    },
+    {
+      "team": "Haiti",
+      "cn": "海地",
+      "elo": 1692.2,
+      "advance": 0.0109,
+      "semifinal": 0.0,
+      "final": 0.0,
+      "champion": 0.0
+    },
+    {
+      "team": "Curaçao",
+      "cn": "库拉索",
+      "elo": 1645.8,
+      "advance": 0.1467,
+      "semifinal": 0.0001,
+      "final": 0.0,
+      "champion": 0.0
+    },
+    {
+      "team": "Tunisia",
+      "cn": "突尼斯",
+      "elo": 1672.2,
+      "advance": 0.0,
+      "semifinal": 0.0,
+      "final": 0.0,
+      "champion": 0.0
+    },
+    {
+      "team": "New Zealand",
+      "cn": "新西兰",
+      "elo": 1713.9,
+      "advance": 0.1519,
+      "semifinal": 0.0003,
+      "final": 0.0001,
+      "champion": 0.0
+    },
+    {
+      "team": "Saudi Arabia",
+      "cn": "沙特",
+      "elo": 1724.4,
+      "advance": 0.4136,
+      "semifinal": 0.001,
+      "final": 0.0001,
+      "champion": 0.0
+    },
+    {
+      "team": "Iraq",
+      "cn": "伊拉克",
+      "elo": 1736.7,
+      "advance": 0.1436,
+      "semifinal": 0.0003,
+      "final": 0.0001,
+      "champion": 0.0
+    },
+    {
+      "team": "Jordan",
+      "cn": "约旦",
+      "elo": 1751.8,
+      "advance": 0.1547,
+      "semifinal": 0.0008,
+      "final": 0.0001,
+      "champion": 0.0
+    },
+    {
+      "team": "Ghana",
+      "cn": "加纳",
+      "elo": 1675.8,
+      "advance": 0.6962,
+      "semifinal": 0.0003,
+      "final": 0.0,
+      "champion": 0.0
+    },
+    {
+      "team": "Panama",
+      "cn": "巴拿马",
+      "elo": 1799.7,
+      "advance": 0.2188,
+      "semifinal": 0.0012,
+      "final": 0.0002,
+      "champion": 0.0
+    }
+  ]
+}

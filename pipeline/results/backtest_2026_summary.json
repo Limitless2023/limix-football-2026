@@ -1,0 +1,28 @@
+{
+  "year": 2026,
+  "n_matches": 40,
+  "train_context": 19673,
+  "leaderboard": {
+    "LimiX": {
+      "accuracy": 0.575,
+      "logloss": 0.9944
+    },
+    "XGBoost": {
+      "accuracy": 0.55,
+      "logloss": 1.0136
+    },
+    "RandomForest": {
+      "accuracy": 0.575,
+      "logloss": 0.9484
+    },
+    "LogisticReg": {
+      "accuracy": 0.55,
+      "logloss": 0.9819
+    }
+  },
+  "scoreline": {
+    "mae": 1.002,
+    "exact_rate": 0.1,
+    "outcome_acc": 0.575
+  }
+}
