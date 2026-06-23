@@ -363,11 +363,15 @@ function renderBacktest(){
   // 固定顺序：大样本(最强论据)→在打→单届故事；避免 JS 把"2022/2026"数字键排到前面
   const keys=['broad','2026','2022'].filter(k=>D.backtests[k]);
   const tabs=document.getElementById('bt-tabs');
-  tabs.innerHTML=keys.map((k,i)=>`<div class="bt-tab ${i===0?'active':''}" data-k="${k}">${BT_META[k]?BT_META[k].name:k}</div>`).join('');
-  tabs.querySelectorAll('.bt-tab').forEach(t=>t.onclick=()=>{
-    tabs.querySelectorAll('.bt-tab').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active'); drawBt(t.dataset.k);
-  });
+  if(keys.length<=1){ tabs.style.display='none'; }
+  else {
+    tabs.style.display='flex';
+    tabs.innerHTML=keys.map((k,i)=>`<div class="bt-tab ${i===0?'active':''}" data-k="${k}">${BT_META[k]?BT_META[k].name:k}</div>`).join('');
+    tabs.querySelectorAll('.bt-tab').forEach(t=>t.onclick=()=>{
+      tabs.querySelectorAll('.bt-tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active'); drawBt(t.dataset.k);
+    });
+  }
   drawBt(keys[0]);
 }
 function drawBt(k){

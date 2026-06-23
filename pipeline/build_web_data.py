@@ -104,7 +104,7 @@ def main():
         "n_sims": odds["n_sims"],
         "live": {"matches": live, "accuracy": live_acc, "n": len(live)},
         "upcoming": upcoming,
-        "backtests": {k: _backtest(k) for k in ("broad", "2022", "2026") if _backtest(k)},
+        "backtests": {k: _backtest(k) for k in ("broad",) if _backtest(k)},
     }
     out = os.path.join(_WEB, "snapshot.json")
     with open(out, "w") as f:
