@@ -65,6 +65,17 @@
   .wdl .w{background:var(--win)} .wdl .d{background:var(--draw)} .wdl .l{background:var(--loss)}
   .wdl-legend{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:7px}
 
+  /* Live inference button */
+  .live-btn{margin-top:6px;background:linear-gradient(90deg,var(--blue),var(--orange));color:#fff;border:none;
+    border-radius:10px;padding:11px 22px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s}
+  .live-btn:hover{opacity:.9} .live-btn:disabled{opacity:.5;cursor:not-allowed}
+  .live-status{margin-top:10px;font-size:13px;color:var(--muted);min-height:18px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .live-status.on{color:var(--orange);font-weight:700}
+  .spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--orange);border-radius:50%;display:inline-block;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .live-badge{display:inline-block;background:var(--orange-dim);color:var(--orange);border:1px solid #FF6B3544;
+    padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+
   /* Live scorecard */
   .ring-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:24px}
   .ring{--p:0;width:120px;height:120px;border-radius:50%;flex-shrink:0;
@@ -174,6 +185,10 @@
       <div class="w" id="wW">主胜</div><div class="d" id="wD">平</div><div class="l" id="wL">客胜</div>
     </div>
     <div class="wdl-legend"><span id="lW"></span><span id="lD"></span><span id="lL"></span></div>
+    <div style="text-align:center">
+      <button id="liveBtn" class="live-btn">⚡ 让 LimiX 现场算一次</button>
+      <div class="live-status" id="liveStatus">默认结果来自离线预计算矩阵 · 点击让 LimiX 服务器现场推理</div>
+    </div>
   </div>
 </div></section>
 
@@ -317,8 +332,40 @@ function renderPredictor(){
   const A=document.getElementById('teamA'), B=document.getElementById('teamB');
   A.innerHTML=opts; B.innerHTML=opts;
   A.value='Spain'; B.value='Argentina';
-  A.onchange=updatePredictor; B.onchange=updatePredictor;
+  const onpick=()=>{ resetLive(); updatePredictor(); };
+  A.onchange=onpick; B.onchange=onpick;
+  document.getElementById('liveBtn').onclick=runLive;
   updatePredictor();
+}
+function resetLive(){
+  const s=document.getElementById('liveStatus');
+  s.className='live-status'; s.textContent='默认结果来自离线预计算矩阵 · 点击让 LimiX 服务器现场推理';
+}
+async function runLive(){
+  const a=document.getElementById('teamA').value, b=document.getElementById('teamB').value;
+  if(a===b)return;
+  const btn=document.getElementById('liveBtn'), s=document.getElementById('liveStatus');
+  btn.disabled=true; s.className='live-status'; s.innerHTML='<span class="spin"></span> LimiX 服务器现场推理中…（约 10 秒，含模型加载可能更久）';
+  try{
+    const r=await fetch(`/api/predict?home=${encodeURIComponent(a)}&away=${encodeURIComponent(b)}`);
+    const d=await r.json();
+    if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status));
+    // 用现场结果刷新比分与概率条
+    document.getElementById('scA').textContent=Math.round(d.gh);
+    document.getElementById('scB').textContent=Math.round(d.ga);
+    const W=d.p_home,Dr=d.p_draw,L=d.p_away;
+    document.getElementById('wW').style.flex=W; document.getElementById('wD').style.flex=Dr; document.getElementById('wL').style.flex=L;
+    document.getElementById('wW').textContent=W>0.08?pct0(W):''; document.getElementById('wD').textContent=Dr>0.08?pct0(Dr):''; document.getElementById('wL').textContent=L>0.08?pct0(L):'';
+    document.getElementById('lW').textContent=D.cn[a]+'胜 '+pct(W);
+    document.getElementById('lD').textContent='平 '+pct(Dr);
+    document.getElementById('lL').textContent=D.cn[b]+'胜 '+pct(L);
+    const fav=W>L?D.cn[a]:D.cn[b];
+    document.getElementById('verdict').innerHTML=`LimiX 判断 <b style="color:var(--orange)">${fav}</b> 占优`;
+    s.className='live-status on';
+    s.innerHTML=`<span class="live-badge">⚡ LimiX 现场推理</span> 模型 ${d.model} · 耗时 ${d.secs}s · 真实调用 LimiX 服务器`;
+  }catch(e){
+    s.className='live-status'; s.textContent='现场推理失败：'+e.message+'（可重试）';
+  }finally{ btn.disabled=false; }
 }
 function updatePredictor(){
   const a=document.getElementById('teamA').value, b=document.getElementById('teamB').value;
