@@ -80,7 +80,8 @@
   .match .meta{color:var(--muted);font-size:12px;margin:7px 0}
   .match .pbar{display:flex;height:6px;border-radius:4px;overflow:hidden;margin-top:8px}
   .match .pbar .w{background:var(--win)} .match .pbar .d{background:var(--draw)} .match .pbar .l{background:var(--loss)}
-  .tick{position:absolute;top:12px;right:12px;font-size:12px;font-weight:700;padding:2px 7px;border-radius:6px}
+  .mhead{display:flex;justify-content:flex-end;margin-bottom:8px}
+  .tick{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px}
   .tick.ok{background:#22C55E22;color:var(--win)} .tick.no{background:#EF444422;color:var(--loss)}
   .pred-line{color:var(--muted);font-size:12px;margin-top:8px}
   .pred-line b{color:var(--blue)}
@@ -344,7 +345,7 @@ function renderLive(){
   document.getElementById('ring').style.setProperty('--p', D.live.accuracy*100);
   const html=D.live.matches.slice().reverse().map(m=>`
     <div class="match">
-      <span class="tick ${m.ok?'ok':'no'}">${m.ok?'✓ 命中':'✗ 爆冷'}</span>
+      <div class="mhead"><span class="tick ${m.ok?'ok':'no'}">${m.ok?'✓ 命中':'✗ 爆冷'}</span></div>
       <div class="row"><span class="team">${m.hflag} ${m.hcn}</span><span class="gs">${m.hs}</span></div>
       <div class="row"><span class="team">${m.aflag} ${m.acn}</span><span class="gs">${m.as}</span></div>
       <div class="pbar">
