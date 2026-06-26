@@ -56,8 +56,26 @@ def _explain(client, train, ex_feat):
     j = r.json()
     if j.get("code") != 0:
         raise RuntimeError(f"explain code={j.get('code')} msg={j.get('message')}")
+    d = j["data"]
+    result = d.get("result") or {}
+    # 接口已改异步：若结果未就绪(无 feature_names)，按 result_id 轮询直至完成
+    if "feature_names" not in result:
+        rid = d["result_id"]
+        for _ in range(60):                          # 最多约 5 分钟
+            time.sleep(5)
+            q = requests.get(f"{client.base}/v1/extensions/results/{rid}",
+                             headers=client.h, timeout=60).json()
+            qd = q.get("data", {})
+            st = qd.get("task_status")
+            if st == "succeeded":
+                result = qd.get("result", {})
+                break
+            if st in ("failed", "timeout", "cancelled"):
+                raise RuntimeError(f"explain {st}: {qd.get('error_message')}")
+    if "feature_names" not in result:
+        raise RuntimeError("explain 轮询超时，结果仍未就绪")
     print(f"[explain] {len(ex_feat)} 场解释完成，耗时 {time.time()-t0:.0f}s")
-    return j["data"]["result"]
+    return result
 
 
 def main():
@@ -72,7 +90,7 @@ def main():
     # 待解释 = 32 场未开踢小组赛
     rem = remaining_group_fixtures()
     fixtures = pd.DataFrame([{
-        "date": pd.Timestamp("2026-06-22"), "home_team": a, "away_team": b,
+        "date": pd.Timestamp("2026-06-26"), "home_team": a, "away_team": b,
         "neutral": True, "tournament": "FIFA World Cup",
     } for g, a, b in rem])
     ex = eng.transform_fixtures(fixtures)

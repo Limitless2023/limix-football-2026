@@ -21,7 +21,7 @@ from tournament_2026 import TEAMS
 
 _OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
 _TRAIN_START = "2006-01-01"
-_TODAY = pd.Timestamp("2026-06-22")
+_TODAY = pd.Timestamp("2026-06-26")
 
 
 def build_matrix(model_type="LIMIX_16M"):

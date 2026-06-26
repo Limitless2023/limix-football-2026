@@ -16,7 +16,7 @@ from tournament_2026 import TEAMS
 _DEPLOY = "/Users/limitless/Desktop/Projects/stable-ai/05-演示产品/limix-football-2026"
 _OUT = os.path.join(_DEPLOY, "api", "_data")
 _CTX = 6000
-_TODAY = pd.Timestamp("2026-06-22")
+_TODAY = pd.Timestamp("2026-06-26")
 
 
 def main():
