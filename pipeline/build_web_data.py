@@ -91,6 +91,30 @@ def main():
         })
     upcoming.sort(key=lambda m: (m["group"], -max(m["p_home"], m["p_away"])))
 
+    # ---- 逐日滚动三方对照(默认/阈值/LLM)----
+    wf = None
+    if os.path.exists(os.path.join(_RES, "daily_walkforward.json")):
+        wfd = _load("daily_walkforward.json")
+        CNL = {"home_win": "主胜", "draw": "平", "away_win": "客胜"}
+        s = wfd["summary"]
+        n = s["n"]
+
+        def _cell(p, actual):
+            return {"pred": CNL[p], "ok": p == actual}
+        wf_rows = [{
+            "date": r["date"], "score": r["score"], "actual": CNL[r["actual"]],
+            "hcn": CN_NAME.get(r["home"], r["home"]), "acn": CN_NAME.get(r["away"], r["away"]),
+            "hflag": _FLAG.get(r["home"], "🏳️"), "aflag": _FLAG.get(r["away"], "🏳️"),
+            "default": _cell(r["limix_default"], r["actual"]),
+            "thr": _cell(r["limix_thr"], r["actual"]),
+            "llm": _cell(r["llm"], r["actual"]),
+        } for r in wfd["rows"]]
+        wf = {"n": n, "draw_total": s["draw_total"], "rows": wf_rows, "methods": {
+            "default": {"name": "LimiX 默认", "acc": round(s["hits_default"] / n, 3), "draw": s["draw_recall_default"]},
+            "thr": {"name": "LimiX 阈值 best_f1", "acc": round(s["hits_thr"] / n, 3), "draw": s["draw_recall_thr"]},
+            "llm": {"name": "LLM 基线", "acc": round(s["llm_hits"] / n, 3), "draw": s["llm_draw_recall"]},
+        }}
+
     snapshot = {
         "generated": matrix["generated"],
         "model": matrix["model"],
@@ -104,6 +128,7 @@ def main():
         "n_sims": odds["n_sims"],
         "live": {"matches": live, "accuracy": live_acc, "n": len(live)},
         "upcoming": upcoming,
+        "walkforward": wf,
         "backtests": {k: _backtest(k) for k in ("broad",) if _backtest(k)},
     }
     out = os.path.join(_WEB, "snapshot.json")

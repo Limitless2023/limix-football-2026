@@ -118,6 +118,25 @@
   .cf .cside{width:80px;text-align:right;font-size:12px;flex-shrink:0}
   .side-h{color:var(--blue)} .side-a{color:var(--orange)} .side-e{color:var(--muted)}
 
+  /* Walk-forward */
+  .wf-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .wf-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px}
+  .wf-card.hl{border-color:#FF6B3555}
+  .wf-card .nm{font-size:14px;color:var(--muted);font-weight:600}
+  .wf-card .nm b{color:var(--orange)}
+  .wf-card .v{font-size:34px;font-weight:800;margin-top:6px}
+  .wf-card .sub2{font-size:13px;color:var(--muted);margin-top:4px}
+  .wf-card .sub2 .hi{color:var(--win);font-weight:700}
+  .wf-wrap{max-height:520px;overflow-y:auto;border:1px solid var(--border);border-radius:12px}
+  table.wf{width:100%;border-collapse:collapse;font-size:13px}
+  table.wf th{position:sticky;top:0;background:var(--panel2);color:var(--muted);font-size:11px;text-transform:uppercase;
+    padding:9px 10px;text-align:left;border-bottom:1px solid var(--border)}
+  table.wf td{padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+  table.wf tr:hover td{background:var(--panel2)}
+  .wf-ok{color:var(--win);font-weight:700} .wf-no{color:var(--loss)}
+  .wf-act{font-weight:700;color:var(--text)}
+  @media(max-width:600px){.wf-cards{grid-template-columns:1fr}}
+
   /* Backtest table */
   table{width:100%;border-collapse:collapse;margin-top:10px}
   th,td{text-align:left;padding:11px 12px;font-size:14px;border-bottom:1px solid var(--border)}
@@ -212,6 +231,14 @@
 </div></section>
 
 <section><div class="wrap">
+  <h2>📅 <span class="accent">逐日滚动预测</span> · 默认 / best_f1阈值 / LLM 三方对照</h2>
+  <p class="sub">每个比赛日只用「之前的历史」训练(无未来泄漏),2026 世界杯 <span id="wf-n"></span> 场逐场对照。阈值版用 OOF 实测 best_f1 阈值;LLM 基线纯大模型不调 LimiX。</p>
+  <div id="wf-cards" style="margin-top:22px"></div>
+  <div id="wf-table" style="margin-top:18px"></div>
+  <p class="bt-note" id="wf-note"></p>
+</div></section>
+
+<section><div class="wrap">
   <h2>📊 <span class="accent">回测成绩单</span> · LimiX vs 传统机器学习</h2>
   <p class="sub">同一份无泄漏特征下，<b>零调参的 LimiX 一次推理</b> 对阵 <b>精心调参的 XGBoost / 随机森林 / 逻辑回归</b>。真值可对照，诚实摊开。</p>
   <div class="bt-tabs" id="bt-tabs"></div>
@@ -272,7 +299,34 @@ function render(){
     document.getElementById('cmp-mae').textContent = broad.scoreline.mae.toFixed(2);
   }
 
-  renderOdds(); renderPredictor(); renderLive(); renderUpcoming(); renderBacktest();
+  renderOdds(); renderPredictor(); renderLive(); renderUpcoming(); renderWalkforward(); renderBacktest();
+}
+
+// ---- 逐日滚动三方对照 ----
+function renderWalkforward(){
+  const w=D.walkforward; if(!w){document.getElementById('wf-table').textContent='(暂无数据)';return;}
+  document.getElementById('wf-n').textContent=w.n;
+  const M=w.methods;
+  const card=(k,hl)=>`<div class="wf-card ${hl?'hl':''}">
+    <div class="nm">${k==='thr'?'<b>'+M[k].name+'</b>':M[k].name}</div>
+    <div class="v" style="${hl?'color:var(--orange)':''}">${pct0(M[k].acc)}</div>
+    <div class="sub2">命中 ${Math.round(M[k].acc*w.n)}/${w.n} · 平局召回 <span class="${k==='thr'?'hi':''}">${M[k].draw}/${w.draw_total}</span></div>
+  </div>`;
+  document.getElementById('wf-cards').innerHTML=`<div class="wf-cards">${card('default')}${card('thr',true)}${card('llm')}</div>`;
+
+  const cell=c=>`<span class="${c.ok?'wf-ok':'wf-no'}">${c.pred} ${c.ok?'✓':'✗'}</span>`;
+  const body=w.rows.map(r=>`<tr>
+    <td style="color:var(--muted)">${r.date}</td>
+    <td>${r.hflag} ${r.hcn} <span style="color:var(--muted)">vs</span> ${r.acn} ${r.aflag}</td>
+    <td style="font-variant-numeric:tabular-nums">${r.score}</td>
+    <td class="wf-act">${r.actual}</td>
+    <td>${cell(r.default)}</td><td>${cell(r.thr)}</td><td>${cell(r.llm)}</td>
+  </tr>`).join('');
+  document.getElementById('wf-table').innerHTML=`<div class="wf-wrap"><table class="wf">
+    <thead><tr><th>日期</th><th>对阵</th><th>比分</th><th>真实</th><th>LimiX默认</th><th>LimiX阈值</th><th>LLM</th></tr></thead>
+    <tbody>${body}</tbody></table></div>`;
+  document.getElementById('wf-note').textContent=
+    `※ 三方准确率挤在 ${pct0(Math.min(M.default.acc,M.thr.acc,M.llm.acc))}~${pct0(Math.max(M.default.acc,M.thr.acc,M.llm.acc))}(60场标准误±6.4pp,差异在噪声内）。阈值版的价值=平局召回 0→${M.thr.draw}、总准确率不降。`;
 }
 
 
