@@ -10,7 +10,47 @@
 """
 from collections import defaultdict
 import pandas as pd
-from data_loader import load_results
+from data_loader import load_results, load_shootouts, load_fixtures
+
+# ============================================================
+# 淘汰赛：北京时间 6/29 起进入淘汰赛 —— 无平局，只有胜/负（加时+点球必分胜负）
+# ============================================================
+KO_START = pd.Timestamp("2026-06-29")
+_SHOOT = None
+
+
+def is_knockout(date) -> bool:
+    return pd.Timestamp(date) >= KO_START
+
+
+def _shoot_map():
+    global _SHOOT
+    if _SHOOT is None:
+        s = load_shootouts()
+        _SHOOT = {(pd.Timestamp(r.date), r.home_team, r.away_team): r.winner for r in s.itertuples()}
+    return _SHOOT
+
+
+def resolve_outcome(date, home, away, hs, as_):
+    """最终胜负 home_win/away_win/draw；平分则按点球胜者定（淘汰赛绝不为平）。"""
+    if hs > as_:
+        return "home_win"
+    if hs < as_:
+        return "away_win"
+    w = _shoot_map().get((pd.Timestamp(date), home, away))
+    if w == home:
+        return "home_win"
+    if w == away:
+        return "away_win"
+    return "draw"
+
+
+def unplayed_fixtures():
+    """2026 世界杯未踢赛程（含淘汰赛），来自数据 NA 比分行：返回 (date, home, away, neutral, ko)。"""
+    fx = load_fixtures()
+    wc = fx[(fx.tournament == "FIFA World Cup") & (fx.date.dt.year == 2026)]
+    return [(r.date, r.home_team, r.away_team, bool(r.neutral), is_knockout(r.date))
+            for r in wc.itertuples()]
 
 # ============================================================
 # 官方 12 组（队名用数据集口径：Czech Republic / Turkey / DR Congo）

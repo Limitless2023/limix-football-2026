@@ -9,7 +9,8 @@ import os
 import json
 import pandas as pd
 from tournament_2026 import (GROUPS, TEAMS, CN_NAME, compute_standings,
-                             played_matches, remaining_group_fixtures)
+                             played_matches, remaining_group_fixtures,
+                             unplayed_fixtures, resolve_outcome, is_knockout)
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _RES = os.path.join(_DIR, "results")
@@ -59,37 +60,53 @@ def main():
     det = pd.read_csv(os.path.join(_RES, "backtest_2026_detail.csv"))
     live, correct = [], 0
     for r in det.itertuples():
-        ok = (r.pred_label == r.label)
+        ko = is_knockout(r.date)
+        ph, pdr, pa = float(r.p_home), float(r.p_draw), float(r.p_away)
+        pred, actual = r.pred_label, r.label
+        if ko:
+            # 淘汰赛：无平 —— 概率去平归一、真实结果按点球胜者定、预测取胜负
+            tot = ph + pa or 1.0
+            ph, pa, pdr = ph / tot, pa / tot, 0.0
+            pred = "home_win" if ph >= pa else "away_win"
+            actual = resolve_outcome(r.date, r.home_team, r.away_team, int(r.home_score), int(r.away_score))
+        ok = (pred == actual)
         correct += int(ok)
         live.append({
             "date": r.date, "home": r.home_team, "away": r.away_team,
             "hcn": CN_NAME.get(r.home_team, r.home_team), "acn": CN_NAME.get(r.away_team, r.away_team),
             "hflag": _FLAG.get(r.home_team, "🏳️"), "aflag": _FLAG.get(r.away_team, "🏳️"),
-            "hs": int(r.home_score), "as": int(r.away_score),
-            "p_home": round(r.p_home, 3), "p_draw": round(r.p_draw, 3), "p_away": round(r.p_away, 3),
-            "pred": r.pred_label, "pred_hs": int(r.pred_home_score), "pred_as": int(r.pred_away_score),
+            "hs": int(r.home_score), "as": int(r.away_score), "ko": ko,
+            "p_home": round(ph, 3), "p_draw": round(pdr, 3), "p_away": round(pa, 3),
+            "pred": pred, "pred_hs": int(r.pred_home_score), "pred_as": int(r.pred_away_score),
             "ok": bool(ok),
         })
     live_acc = round(correct / len(live), 4) if live else 0
 
-    # ---- 前瞻预测：32 场未开踢小组赛（预测取大矩阵，解释取 LimiX local）----
+    # ---- 前瞻预测：未踢赛程(小组+淘汰赛，数据驱动)；淘汰赛二分类(无平) ----
     pairs = matrix["pairs"]
     expl = _load("explanations.json")["explanations"] if os.path.exists(os.path.join(_RES, "explanations.json")) else {}
+    TEAM_GROUP = {t: g for g, ts in GROUPS.items() for t in ts}
     upcoming = []
-    for g, a, b in remaining_group_fixtures():
+    for date, a, b, neutral, ko in unplayed_fixtures():
         p = pairs.get(f"{a}|{b}")
         if not p:
             continue
+        ph, pdr, pa, gh, ga = p["p_home"], p["p_draw"], p["p_away"], round(p["gh"]), round(p["ga"])
+        if ko:                                    # 淘汰赛：去平归一，比分至少分胜负
+            tot = ph + pa or 1.0
+            ph, pa, pdr = round(ph / tot, 4), round(pa / tot, 4), 0.0
+            if gh == ga:
+                gh, ga = (gh + 1, ga) if ph >= pa else (gh, ga + 1)
         ex = expl.get(f"{a}|{b}", {})
         upcoming.append({
-            "group": g, "home": a, "away": b,
-            "hcn": CN_NAME[a], "acn": CN_NAME[b],
+            "group": ("淘汰赛" if ko else TEAM_GROUP.get(a, "?")), "ko": ko,
+            "date": pd.Timestamp(date).strftime("%m-%d"), "home": a, "away": b,
+            "hcn": CN_NAME.get(a, a), "acn": CN_NAME.get(b, b),
             "hflag": _FLAG.get(a, "🏳️"), "aflag": _FLAG.get(b, "🏳️"),
-            "p_home": p["p_home"], "p_draw": p["p_draw"], "p_away": p["p_away"],
-            "gh": round(p["gh"]), "ga": round(p["ga"]),
+            "p_home": ph, "p_draw": pdr, "p_away": pa, "gh": gh, "ga": ga,
             "concepts": ex.get("concepts", [])[:5],
         })
-    upcoming.sort(key=lambda m: (m["group"], -max(m["p_home"], m["p_away"])))
+    upcoming.sort(key=lambda m: (m["ko"], m["group"], -max(m["p_home"], m["p_away"])))
 
     # ---- 逐日滚动三方对照(默认/阈值/LLM)----
     wf = None

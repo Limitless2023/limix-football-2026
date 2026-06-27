@@ -338,7 +338,7 @@ function renderUpcoming(){
   const sideCls={home:'side-h',away:'side-a',even:'side-e'};
   let html='';
   Object.keys(byG).sort().forEach(g=>{
-    html+=`<div class="grp-title">${g} 组</div>`;
+    html+=`<div class="grp-title">${g==='淘汰赛'?'🏆 淘汰赛（无平 · 胜/负）':g+' 组'}</div>`;
     byG[g].forEach((m,i)=>{
       const id=`up-${g}-${i}`;
       const concepts=(m.concepts||[]).map(c=>{
@@ -355,7 +355,7 @@ function renderUpcoming(){
           <span class="up-caret">▶</span>
         </div>
         <div class="up-body">
-          <div class="up-why">胜平负：${m.hcn}胜 ${pct0(m.p_home)} · 平 ${pct0(m.p_draw)} · ${m.acn}胜 ${pct0(m.p_away)}　|　LimiX 预测比分 <b style="color:var(--orange)">${m.gh}:${m.ga}</b></div>
+          <div class="up-why">${m.ko?`晋级概率：${m.hcn} ${pct0(m.p_home)} · ${m.acn} ${pct0(m.p_away)}`:`胜平负：${m.hcn}胜 ${pct0(m.p_home)} · 平 ${pct0(m.p_draw)} · ${m.acn}胜 ${pct0(m.p_away)}`}　|　LimiX 预测比分 <b style="color:var(--orange)">${m.gh}:${m.ga}</b></div>
           <div class="up-why">🔍 LimiX 局部解释 — 各因素重要性（条长）与利好方（颜色）：</div>
           ${concepts||'<span class="up-why">（该场暂无解释数据）</span>'}
         </div>
@@ -452,7 +452,7 @@ function renderLive(){
       <div class="pbar">
         <i class="w" style="width:${m.p_home*100}%"></i><i class="d" style="width:${m.p_draw*100}%"></i><i class="l" style="width:${m.p_away*100}%"></i>
       </div>
-      <div class="pred-line">LimiX 赛前预测：<b>${m.pred_hs}:${m.pred_as}</b> · 主胜${pct0(m.p_home)}/平${pct0(m.p_draw)}/客胜${pct0(m.p_away)}</div>
+      <div class="pred-line">LimiX 赛前预测：<b>${m.pred_hs}:${m.pred_as}</b>${m.ko?` · 晋级 ${m.hcn}${pct0(m.p_home)}/${m.acn}${pct0(m.p_away)} <span style="color:var(--orange)">[淘汰赛]</span>`:` · 主胜${pct0(m.p_home)}/平${pct0(m.p_draw)}/客胜${pct0(m.p_away)}`}</div>
     </div>`).join('');
   document.getElementById('live').innerHTML=html;
 }

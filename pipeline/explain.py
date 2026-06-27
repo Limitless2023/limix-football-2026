@@ -18,7 +18,7 @@ import pandas as pd
 from data_loader import load_results
 from features import FeatureEngine, FEATURE_COLS
 from limix_client import LimiXClient
-from tournament_2026 import remaining_group_fixtures, CN_NAME, TEAM_GROUP
+from tournament_2026 import unplayed_fixtures, CN_NAME, TEAM_GROUP
 
 _OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
 _LABEL_MAP = {"away_win": 0, "draw": 1, "home_win": 2}
@@ -87,12 +87,12 @@ def main():
     train = hist[hist.date >= "2018-01-01"][FEATURE_COLS + ["label"]].tail(1500).copy()
     train["label"] = train["label"].map(_LABEL_MAP)
 
-    # 待解释 = 32 场未开踢小组赛
-    rem = remaining_group_fixtures()
+    # 待解释 = 未踢赛程(小组 + 淘汰赛)
+    rem = [(a, b) for (d, a, b, n, ko) in unplayed_fixtures()]
     fixtures = pd.DataFrame([{
         "date": pd.Timestamp("2026-06-26"), "home_team": a, "away_team": b,
         "neutral": True, "tournament": "FIFA World Cup",
-    } for g, a, b in rem])
+    } for a, b in rem])
     ex = eng.transform_fixtures(fixtures)
     ex_feat = ex[FEATURE_COLS]
 
@@ -106,7 +106,8 @@ def main():
 
     # 逐场聚合到概念
     out = {}
-    for k, (g, a, b) in enumerate(rem):
+    for k, (a, b) in enumerate(rem):
+        g = TEAM_GROUP.get(a, "?")
         row = ex.iloc[k]
         concept_imp = []
         for cname, cols, dfn in _CONCEPTS:

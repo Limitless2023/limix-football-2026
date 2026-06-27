@@ -45,6 +45,13 @@ def load_results() -> pd.DataFrame:
     return df
 
 
+def load_fixtures() -> pd.DataFrame:
+    """未踢赛程：home_score/away_score 为空的比赛（含未来淘汰赛对阵）。"""
+    df = _cached("results")
+    df = df[df["home_score"].isna() | df["away_score"].isna()].copy()
+    return df.sort_values("date").reset_index(drop=True)
+
+
 def load_shootouts() -> pd.DataFrame:
     """点球大战：date/home_team/away_team/winner/first_shooter（淘汰赛平局判定用）"""
     return _cached("shootouts")
